@@ -1,0 +1,12 @@
+slug = "iam"
+name = "schematize-iam"
+tag = "Disciplina · Identidade e acesso (IAM)"
+status = "beta"
+order = 43
+current_version = "0.3.0"
+href = "/iam"
+
+[descriptions]
+pt = "O broker de identidade da casa em auth.<domínio>: identidade que não é e-mail, OIDC/OAuth 2.1 com PKCE, passkeys no núcleo, 2FA baseline sem muro pré-login, sessão longa com refresh rotativo e logout irreversível, ReBAC multi-tenant, recuperação tão forte quanto o login e risk engine adaptativo."
+en = "The house's identity broker at auth.<domain>: identity that is not an e-mail, OIDC/OAuth 2.1 with PKCE, passkeys at the core, baseline 2FA with no pre-login wall, long sessions with rotating refresh and irreversible logout, multi-tenant ReBAC, recovery as strong as login and an adaptive risk engine."
+es = "El broker de identidad de la casa en auth.<dominio>: identidad que no es un e-mail, OIDC/OAuth 2.1 con PKCE, passkeys en el núcleo, 2FA baseline sin muro previo al login, sesión larga con refresh rotativo y logout irreversible, ReBAC multi-tenant, recuperación tan fuerte como el login y risk engine adaptativo."
