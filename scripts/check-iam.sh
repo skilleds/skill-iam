@@ -16,7 +16,10 @@
 # Regras (id): implicit-flow · ropc-grant · pkce-ausente · pkce-plain · redirect-curinga ·
 #   senha-hash-rapido · senha-bcrypt · argon2-nao-id · argon2-fraco · jwt-none · jwt-sem-verificacao ·
 #   jwt-segredo-fraco · jwt-simetrico · token-em-storage · prng-fraco · cookie-sem-httponly ·
-#   cookie-samesite-none-sem-secure · email-como-id · chave-privada-no-repo.
+#   cookie-samesite-none-sem-secure · email-como-id · chave-privada-no-repo · passkey-fase0.
+# passkey-fase0: se o projeto tem IAM (authorize/OIDC/JWT/argon2/sessão), exige EVIDÊNCIA de passkey
+#   (WebAuthn/passkey/navigator.credentials) = ERRO se nenhuma; AVISO se faltar RP ID/origin em config ou
+#   teste de challenge reutilizado. Waiver do projeto inteiro: `iam-ok: passkey-fase0 <motivo>` em qualquer arquivo.
 set -euo pipefail
 
 RAIZ="${1:-.}"
@@ -118,6 +121,21 @@ while IFS= read -r arq; do
     printf '%s:%s: [ERRO pkce-ausente] fluxo authorization code sem PKCE (code_challenge S256): obrigatório para todo cliente\n' "$arq" "$ln" >>"$ACHADOS"
   fi
 done <"$LISTA"
+
+# passkey-fase0: passkey é padrão e entra na fase 0; projeto com IAM sem nenhuma evidência reprova.
+# Evidência é heurística de texto (rota/handler/teste); a prova real é o teste de passkey rodando.
+TEM_IAM="$(xargs -d '\n' grep -lIiE "response_type[\"' =:\[]+code\b|/authorize\b|/\.well-known/(openid|jwks)|jwks_uri|issuer[\"' ]*[:=]|argon2id?|jwt\.(sign|verify|decode)|SESSION_COOKIE|refresh_token" <"$LISTA" 2>/dev/null | head -1 || true)"
+if [ -n "$TEM_IAM" ] && ! xargs -d '\n' grep -qIE "iam-ok:[ ]*passkey-fase0" <"$LISTA" 2>/dev/null; then
+  PK_RE="webauthn|passkey|navigator\.credentials|PublicKeyCredential|fido2|simplewebauthn|go-webauthn|webauthn-rs"
+  if ! xargs -d '\n' grep -qIiE "$PK_RE" <"$LISTA" 2>/dev/null; then
+    printf '%s:1: [ERRO passkey-fase0] projeto com IAM sem evidência de passkey/WebAuthn: registro e asserção reais entram na fase 0 (fatores.md 5.1)\n' "$TEM_IAM" >>"$ACHADOS"
+  else
+    xargs -d '\n' grep -qIiE "rp_?id|rpID|relying_?party|WEBAUTHN_(RP|ORIGIN)|expected_?origin|allowed_?origins" <"$LISTA" 2>/dev/null \
+      || printf '%s:1: [AVISO passkey-fase0] passkey sem RP ID/origin fixados em config (por ambiente)\n' "$TEM_IAM" >>"$ACHADOS"
+    xargs -d '\n' grep -qIiE "(reus|replay|reutiliz|repeat|stale|single[_ -]?use|consumed)[^\n]{0,60}challenge|challenge[^\n]{0,60}(reus|replay|reutiliz|repeat|stale|single[_ -]?use|consumed|expired)" <"$LISTA" 2>/dev/null \
+      || printf '%s:1: [AVISO passkey-fase0] sem teste de challenge reutilizado rejeitado\n' "$TEM_IAM" >>"$ACHADOS"
+  fi
+fi
 
 if [ -s "$ACHADOS" ]; then
   sort -u "$ACHADOS"

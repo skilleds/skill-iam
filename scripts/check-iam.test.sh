@@ -128,9 +128,16 @@ novo waiver; f a.go <<'X'
 // iam-ok: legado-rehash — verifica hash bcrypt e regrava em argon2id no login
 ok := bcrypt.CompareHashAndPassword(h, pw)
 X
+f pk.go <<'X'
+// webauthn rpID=cfg.RPID; teste challenge reutilizado rejeitado
+X
 esperar 0 "ok"
 
-novo bom; f a.ts <<'X'
+novo bom; f passkey.ts <<'X'
+// webauthn: rpID fixado por ambiente; teste: challenge reutilizado rejeitado
+const rpID = process.env.WEBAUTHN_RP_ID; const expectedOrigin = cfg.allowedOrigins;
+X
+f a.ts <<'X'
 const url = `${AUTH}/authorize?response_type=code&code_challenge=${c}&code_challenge_method=S256`;
 const h = "$argon2id$v=19$m=19456,t=2,p=1$abc$def";
 const sub = user.id; // ULID
@@ -138,6 +145,31 @@ const tok = crypto.randomBytes(32).toString("base64url");
 X
 f c.json <<'X'
 { "redirect_uris": ["https://app.exemplo.com/api/auth/callback"] }
+X
+esperar 0 "ok"
+
+novo passkey-ausente; f a.ts <<'X'
+const url = `${AUTH}/authorize?response_type=code&code_challenge=${c}&code_challenge_method=S256`;
+const h = "$argon2id$v=19$m=19456,t=2,p=1$abc$def";
+X
+esperar 1 "passkey-fase0"
+
+novo passkey-sem-rpid; f pk.go <<'X'
+// webauthn register/assert handlers
+func Register() {} // test: challenge reutilizado rejeitado
+const h = "$argon2id$v=19$m=19456,t=2,p=1$abc$def"
+X
+esperar 0 "sem RP ID/origin"
+
+novo passkey-sem-teste-challenge; f pk.go <<'X'
+// webauthn handlers; rpID = cfg.RPID
+const h = "$argon2id$v=19$m=19456,t=2,p=1$abc$def"
+X
+esperar 0 "challenge reutilizado"
+
+novo passkey-waiver; f a.ts <<'X'
+// iam-ok: passkey-fase0 serviço só de leitura, IdP é outro repo
+const h = "$argon2id$v=19$m=19456,t=2,p=1$abc$def";
 X
 esperar 0 "ok"
 

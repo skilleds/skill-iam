@@ -10,6 +10,9 @@ Dona: `schematize-iam`. Base: `schematize-engineering → references/iam.md` §4
   cancelável + revisão**: o atraso notifica todos os canais verificados com botão "não fui eu".
 - Rate-limit agressivo, token de reset de CSPRNG, single-use, TTL curto, hasheado no store; tudo auditado.
   Reset **revoga todas as sessões** e refresh da conta.
+- **Recuperação >= login por passkey:** se a conta tem passkey, nenhum caminho de recuperação entrega acesso com menos
+  força que ela (e-mail sozinho não basta): exige outro fator forte (outra passkey, código de backup) ou o processo com
+  atraso cancelável + revisão. Remoção/reset de passkey notifica todos os canais.
 - **Perdi o fator forte:** o baseline (senha + Email OTP) continua dando acesso baseline; o forte é re-enrolado
   just-in-time, verificado por Email OTP (Y != X). Nenhum estado fica sem saída self-service.
 - SSO banido/removido: a conta tem caminho local forçado no cadastro. A saída nunca manda quem está sem sessão

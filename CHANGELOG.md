@@ -2,6 +2,13 @@
 
 Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
+## [0.3.0] — 2026-10-20
+### Adicionado
+- **Passkey na fase 0 como padrão** (`fatores.md` §5.1): ceremonies de registro e asserção, parâmetros WebAuthn, gestão de credenciais, armadilhas e 7 testes obrigatórios; passwordless-first.
+- Regra `passkey-fase0` no `check-iam.sh` (ERRO sem evidência de passkey em projeto com IAM; AVISO sem RP ID ou teste de challenge reutilizado).
+- Recuperação >= login por passkey e `amr/acr/aal` altos na sessão.
+- Porquê: passkey é o método mais confortável e seguro; adiá-la vira dívida de IAM.
+
 
 ## [0.2.1] — 2026-10-14
 Ponteiro para a skill nova `schematize-bots` (piso curto, sem duplicar).

@@ -8,6 +8,8 @@ Dona: `schematize-iam`. Base: `schematize-engineering → references/iam.md` §6
   e último uso, nível de confiança. N sessões simultâneas por usuário; nenhuma derruba a outra.
 - **View de dispositivos:** lista, revoga uma, "sair de todos". Revogar mata refresh + família + push token
   daquele dispositivo.
+- **Sessão emitida após passkey** carrega `amr` (`hwk`/`swk` + `user` se UV) e `acr/aal` altos; a sessão guarda o
+  `auth_time` da asserção, e o step-up reaproveita esse AAL dentro do `max_age` (`fatores.md` §5.1).
 - **Sessão longa sem chute:** access token 15 min com **refresh silencioso** -> sessão de **7 dias** por padrão;
   pergunta se o dispositivo é confiável -> **90 dias**. Ação sensível pede step-up fresco mesmo na sessão longa.
 
