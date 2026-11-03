@@ -26,6 +26,19 @@ Dona: `schematize-iam` (o modelo e o contrato de PDP/PEP). O contrato HTTP/OpenA
    Check responder", nunca cache positivo além do TTL sob falha. Motor lento vira 503, jamais acesso indevido.
 3. **Denylist de `jti` consultada em todo caminho** (`sessao.md` §3).
 
+### 2.1 Outbox de tuplas sob o piso 28
+
+O outbox é a fila de espera do piso 28 e herda o contrato inteiro, porque aqui falha de entrega é
+**privilégio que sobrevive à revogação**: fila **durável** (tabela na mesma transação, nunca memória);
+ack só depois do commit no motor; retry com backoff+jitter; **DLQ** para tupla envenenada, com alerta
+(`trace_id`, `observability → metricas.md` "Fila e resiliência") e **revogação (delete) com prioridade
+sobre concessão** na drenagem. Dois testes são obrigatórios no CI do serviço, além dos 7 do piso 28:
+1. **crash entre o commit e o publish**: mate o worker depois de gravar a linha e o evento e antes de
+   escrever no motor; ao reiniciar, a tupla chega ao motor exatamente uma vez, sem perda;
+2. **reentrega idempotente**: publicar o mesmo evento 2x (write de tupla já existente / delete de
+   tupla inexistente) é no-op e não gera erro nem duplicata.
+Lag do outbox acima do orçamento é alerta SEV, não métrica de vitrine.
+
 ## 3. Modelo base (ver `assets/authz/model.fga`)
 
 Tipos: `user`, `tenant` (owner/admin/member/viewer), `role` (papel customizado, com `assignee`), `resource`
@@ -48,6 +61,10 @@ que é ação financeira e exige step-up é da `schematize-payments`.
 
 ## 5. Contrato com os serviços
 
-O serviço declara, em tabela versionada no repo, `rota -> permissão -> objeto resolvido`. O gate de CI
-falha se existir rota sem linha na tabela. A resposta para recurso de outro tenant é **404** (não revela
+O serviço declara, em tabela versionada no repo, `rota -> permissão -> objeto resolvido`. O gate é o
+`check-route-authz.sh` da `schematize-qa` (`bash <qa>/scripts/check-route-authz.sh --routes inventario.txt
+--matrix matriz.txt [--public-allowlist publicas.txt]`; inventário derivado do router/OpenAPI, nunca à mão):
+reprova rota sem as 4 personas (M == N), rota sem política e anônimo permitido fora da allowlist. Rodar esse
+gate é exigência de todo serviço que usa este modelo (piso 20); esta skill não duplica o script. Roda local e
+antes de promover a hml (piso 27); não existe "check obrigatório no PR". A resposta para recurso de outro tenant é **404** (não revela
 existência) ou 403 com o mesmo corpo e tempo; escolha uma, documente no OpenAPI (`schematize-api`).

@@ -46,3 +46,16 @@ Dona: `schematize-iam`. Base normativa: `schematize-engineering → references/i
   reversíveis; backup do banco do auth testado por restore.
 - DNS de e-mail do domínio de envio (SPF, DKIM, DMARC) é pré-requisito do OTP chegar; sem DMARC o
   primeiro e-mail de domínio novo tende a cair em spam.
+
+## 4. Quem opera: o ops, nunca a IA (piso 24)
+
+Rotação de chave de assinatura (novo `kid` no JWKS, sobreposição, retirada da antiga), recuperação
+administrativa de conta e revogação em massa de sessões/refresh são **operações da VPS**. Cada uma é uma
+**operação nomeada do `<projeto>_ops`** (ex.: `ops auth key-rotate`, `ops auth admin-recover`,
+`ops auth revoke-all`), idempotente, com dry-run, auditada e com aprovação humana para as destrutivas.
+Regras para a IA:
+- **nunca toca a chave privada** (nem lê, nem gera, nem copia, nem cola em log ou prompt): a chave nasce e
+  vive no segredo de runtime do auth; a IA só vê o JWKS **público** e o resultado da operação;
+- **nunca escreve SQL** no banco do auth nem edita arquivo na VPS: não existe a operação? **cria no ops**
+  (com teste) e depois a executa por ele;
+- recuperação administrativa passa por 2 pessoas e deixa trilha imutável (`recuperacao-risco.md`).

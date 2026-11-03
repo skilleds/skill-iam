@@ -42,6 +42,8 @@ exaustivo por fase) e aponta para cá.
    revisão geral `/eng-review` (e `/eng-ops`, `/eng-iam`, `/eng-index`). Os comandos
    `/iam-*` cobrem o domínio desta skill; o piso geral é o da base.<!-- /herdado -->
 
+Herda os pisos 22–29 da `schematize-engineering` (git como trava de conclusão, deploy só do git, ops é o gate da IA, sem agents inúteis, relatório 30 min/handoff 6 h, CI remoto só antes do hml, microserviço autônomo, build em dev/hml + higiene).
+
 ## Fronteira com as outras skills
 
 | Assunto | Dono | Ponteiro |
@@ -55,7 +57,7 @@ exaustivo por fase) e aponta para cá.
 | Cliente mobile (OIDC/PKCE nativo, Keychain/Keystore, passkey nativa) | `schematize-mobile` | `schematize-mobile → /mobile-auth` |
 | Implementação do IdP em Go, Rust, Elixir, C#, Ruby, Zig | skill da linguagem | `/go-iam`, `/rust-iam`, `/elixir-iam`, `/cs-iam`, `/ruby-iam`, `/zig-iam` |
 | Schema das tabelas de identidade | `schematize-database` | modelagem; aqui só as regras (ID imutável, N identificadores) |
-| Cofre, rotação de chave, deploy do serviço | `schematize-infra` | segredos e entrega |
+| Cofre, rotação de chave, deploy do serviço | `schematize-infra` + ops | rotação, recuperação admin e revogação em massa são operações nomeadas do ops; a IA nunca toca a chave privada (`topologia.md` §4) |
 | Efeito externo do OTP (e-mail/SMS só em prd) | `schematize-engineering` | `references/efeitos-externos.md` |
 | Telemetria e alerta de eventos de segurança | `schematize-observability` | log de auditoria alimenta; aqui o conteúdo |
 
@@ -81,7 +83,7 @@ exaustivo por fase) e aponta para cá.
 2. **Topologia primeiro** (`references/topologia.md`): auth separada, broker único, chave só no auth, JWKS.
 3. **Protocolo** (`references/protocolos.md`): authorization code + PKCE S256, tokens finos, validação obrigatória.
 4. **Fatores** (`references/fatores.md`): 2FA baseline sem muro, passkey real, argon2id, step-up. **A Fase 0 do IAM inclui
-   passkey** (registro + asserção + testes, §5.1) antes de qualquer feature; o gate `passkey-fase0` cobra a evidência.
+   passkey** (registro + asserção + testes, §5.1) antes de qualquer feature; o gate `passkey-fase0` cobra handler `/webauthn/register|authenticate` + teste (palavra solta não conta).
 5. **Sessão** (`references/sessao.md`): 7d/90d, refresh rotativo exercido pelo consumidor, logout irreversível.
 6. **Autorização** (`references/authz-rebac.md`): ReBAC, PDP/PEP, outbox, fail-closed.
 7. **Recuperação e risco** (`references/recuperacao-risco.md`): força >= login, risk engine, auditoria.

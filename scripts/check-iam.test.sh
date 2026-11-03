@@ -7,6 +7,8 @@ set -u
 AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 G="$AQUI/check-iam.sh"
 TMP="$(mktemp -d)"
+# shellcheck disable=SC2016  # fixture literal: o '$' faz parte do hash de exemplo
+A='const h = "$argon2id$v=19$m=19456,t=2,p=1$abc$def";'
 trap 'rm -rf "${TMP:?}"' EXIT INT TERM
 ok=0; fail=0; D=""; NOME=""
 
@@ -129,13 +131,17 @@ novo waiver; f a.go <<'X'
 ok := bcrypt.CompareHashAndPassword(h, pw)
 X
 f pk.go <<'X'
-// webauthn rpID=cfg.RPID; teste challenge reutilizado rejeitado
+// iam-ok: passkey-fase0 teste de waiver (IdP em outro repo)
 X
 esperar 0 "ok"
 
 novo bom; f passkey.ts <<'X'
-// webauthn: rpID fixado por ambiente; teste: challenge reutilizado rejeitado
 const rpID = process.env.WEBAUTHN_RP_ID; const expectedOrigin = cfg.allowedOrigins;
+app.post("/webauthn/register", registrar); app.post("/webauthn/authenticate", autenticar);
+X
+f passkey.test.ts <<'X'
+// challenge reutilizado rejeitado
+await post("/webauthn/register", opt); await post("/webauthn/authenticate", opt);
 X
 f a.ts <<'X'
 const url = `${AUTH}/authorize?response_type=code&code_challenge=${c}&code_challenge_method=S256`;
@@ -154,18 +160,56 @@ const h = "$argon2id$v=19$m=19456,t=2,p=1$abc$def";
 X
 esperar 1 "passkey-fase0"
 
-novo passkey-sem-rpid; f pk.go <<'X'
-// webauthn register/assert handlers
-func Register() {} // test: challenge reutilizado rejeitado
-const h = "$argon2id$v=19$m=19456,t=2,p=1$abc$def"
+PKH='app.post("/webauthn/register", r); app.post("/webauthn/authenticate", a);'
+PKT='await post("/webauthn/register", o); await post("/webauthn/authenticate", o); // challenge reutilizado rejeitado'
+
+novo passkey-sem-rpid; f pk.ts <<X
+$PKH
+$A
+X
+f pk.test.ts <<X
+$PKT
 X
 esperar 0 "sem RP ID/origin"
 
-novo passkey-sem-teste-challenge; f pk.go <<'X'
-// webauthn handlers; rpID = cfg.RPID
-const h = "$argon2id$v=19$m=19456,t=2,p=1$abc$def"
+novo passkey-sem-teste-challenge; f pk.ts <<X
+$PKH // rpID = cfg.RPID
+$A
+X
+f pk.test.ts <<'X'
+await post("/webauthn/register", o); await post("/webauthn/authenticate", o);
 X
 esperar 0 "challenge reutilizado"
+
+# P1-14: palavra solta não é passkey. README/JSON/comentário contendo 'passkey' continua vermelho.
+novo passkey-palavra-em-json; f a.ts <<X
+$A
+X
+f config.json <<'X'
+{ "passkey": true, "webauthn": "enabled", "notes": "/webauthn/register /webauthn/authenticate" }
+X
+esperar 1 "passkey-fase0"
+
+novo passkey-so-comentario; f a.ts <<X
+// TODO passkey: app.post("/webauthn/register") e "/webauthn/authenticate"
+$A
+X
+esperar 1 "sem handler de rota"
+
+novo passkey-sem-teste; f pk.ts <<X
+$PKH
+$A
+X
+esperar 1 "sem teste correspondente"
+
+novo passkey-so-register; f pk.ts <<X
+app.post("/webauthn/register", r);
+$A
+X
+f pk.test.ts <<X
+$PKT
+X
+esperar 1 "webauthn/authenticate"
 
 novo passkey-waiver; f a.ts <<'X'
 // iam-ok: passkey-fase0 serviço só de leitura, IdP é outro repo

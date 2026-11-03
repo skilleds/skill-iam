@@ -2,6 +2,16 @@
 
 Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
+## [Não lançado]
+### Corrigido
+- `check-iam.sh` `passkey-fase0`: deixa de aceitar a palavra "passkey" solta (README, JSON, comentário). Exige handler de rota `/webauthn|passkeys/register` e `/authenticate` em código (linha não-comentário) E arquivo de teste que exercite as duas; teste vermelho com JSON/comentário contendo "passkey" (P1-14). `check-iam.test.sh` agora com 32 casos.
+- `authz-rebac.md` §5: a promessa "o gate de CI falha se existir rota sem linha" agora aponta o gate real, `check-route-authz.sh` da `schematize-qa`, exigido por serviço; sem CI de PR (P1-13).
+- `stack-versoes.md`: contagem de casos do teste e `model.fga` sem validação registrado como `[~]` (P2-3).
+### Adicionado
+- `authz-rebac.md` §2.1: outbox de tuplas sob o piso 28 (fila durável, DLQ, revogação com prioridade, alerta com `trace_id`) e 2 testes obrigatórios: crash entre commit e publish; reentrega idempotente (P1-15).
+- `topologia.md` §4: rotação de chave/JWKS, recuperação administrativa e revogação em massa são operações nomeadas do ops; a IA nunca toca a chave privada nem escreve SQL (piso 24, P1-16).
+- Bloco herdado dos pisos 22–29 em `SKILL.md` e `assets/CLAUDE.md`.
+
 ## [0.3.0] — 2026-10-20
 ### Adicionado
 - **Passkey na fase 0 como padrão** (`fatores.md` §5.1): ceremonies de registro e asserção, parâmetros WebAuthn, gestão de credenciais, armadilhas e 7 testes obrigatórios; passwordless-first.

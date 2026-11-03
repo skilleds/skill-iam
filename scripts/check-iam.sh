@@ -17,8 +17,9 @@
 #   senha-hash-rapido · senha-bcrypt · argon2-nao-id · argon2-fraco · jwt-none · jwt-sem-verificacao ·
 #   jwt-segredo-fraco · jwt-simetrico · token-em-storage · prng-fraco · cookie-sem-httponly ·
 #   cookie-samesite-none-sem-secure · email-como-id · chave-privada-no-repo · passkey-fase0.
-# passkey-fase0: se o projeto tem IAM (authorize/OIDC/JWT/argon2/sessão), exige EVIDÊNCIA de passkey
-#   (WebAuthn/passkey/navigator.credentials) = ERRO se nenhuma; AVISO se faltar RP ID/origin em config ou
+# passkey-fase0: se o projeto tem IAM (authorize/OIDC/JWT/argon2/sessão), exige handler de rota
+#   /webauthn|passkey(s)/register e /authenticate em CÓDIGO (linha não-comentário) E teste que exercite as duas
+#   = ERRO se faltar; palavra solta em README/JSON/comentário não conta. AVISO se faltar RP ID/origin ou
 #   teste de challenge reutilizado. Waiver do projeto inteiro: `iam-ok: passkey-fase0 <motivo>` em qualquer arquivo.
 set -euo pipefail
 
@@ -122,14 +123,31 @@ while IFS= read -r arq; do
   fi
 done <"$LISTA"
 
-# passkey-fase0: passkey é padrão e entra na fase 0; projeto com IAM sem nenhuma evidência reprova.
-# Evidência é heurística de texto (rota/handler/teste); a prova real é o teste de passkey rodando.
+# passkey-fase0: passkey é padrão e entra na fase 0; projeto com IAM sem passkey REAL reprova.
+# Prova estática mínima (a prova de verdade é o teste rodando): palavra solta em README/JSON/comentário NÃO conta.
+# Exige (a) HANDLER: arquivo de código (não teste) com linha NÃO-comentário que declara a rota
+# `/webauthn|passkey(s)/register` E a rota `/…/authenticate`; (b) TESTE: arquivo de teste que exercita as DUAS rotas.
+CODE_RE='\.(js|mjs|cjs|ts|tsx|jsx|py|go|rs|ex|exs|cs|rb|php|java|kt|swift|dart)$'
+TEST_RE='(^|/)(tests?|__tests__|spec|specs)/|[._-](test|spec)\.|_test\.|(^|/)test_'
+ROTA_REG="[\"'\`][^\"'\`]*/(webauthn|passkeys?)/register"
+ROTA_AUT="[\"'\`][^\"'\`]*/(webauthn|passkeys?)/authenticate"
+grep -E "$CODE_RE" "$LISTA" | grep -vE "$TEST_RE" >"$LISTA.h" || true
+grep -E "$CODE_RE" "$LISTA" | grep -E "$TEST_RE" >"$LISTA.t" || true
+trap 'rm -f "$ACHADOS" "$LISTA" "$LISTA.h" "$LISTA.t"' EXIT INT TERM
+# tem_rota <arquivo-de-lista> <regex>: alguma linha que não é comentário casa a rota
+tem_rota() {
+  [ -s "$1" ] || return 1
+  xargs -d '\n' grep -hIiE -- "$2" <"$1" 2>/dev/null | grep -vE '^[[:space:]]*(//|#|\*|/\*|--)' | grep -q .
+}
 TEM_IAM="$(xargs -d '\n' grep -lIiE "response_type[\"' =:\[]+code\b|/authorize\b|/\.well-known/(openid|jwks)|jwks_uri|issuer[\"' ]*[:=]|argon2id?|jwt\.(sign|verify|decode)|SESSION_COOKIE|refresh_token" <"$LISTA" 2>/dev/null | head -1 || true)"
 if [ -n "$TEM_IAM" ] && ! xargs -d '\n' grep -qIE "iam-ok:[ ]*passkey-fase0" <"$LISTA" 2>/dev/null; then
-  PK_RE="webauthn|passkey|navigator\.credentials|PublicKeyCredential|fido2|simplewebauthn|go-webauthn|webauthn-rs"
-  if ! xargs -d '\n' grep -qIiE "$PK_RE" <"$LISTA" 2>/dev/null; then
-    printf '%s:1: [ERRO passkey-fase0] projeto com IAM sem evidência de passkey/WebAuthn: registro e asserção reais entram na fase 0 (fatores.md 5.1)\n' "$TEM_IAM" >>"$ACHADOS"
-  else
+  tem_rota "$LISTA.h" "$ROTA_REG" \
+    || printf '%s:1: [ERRO passkey-fase0] sem handler de rota /webauthn/register (ou /passkeys/register) em código: palavra "passkey" em doc/config/comentário não prova registro real (fatores.md 5.1)\n' "$TEM_IAM" >>"$ACHADOS"
+  tem_rota "$LISTA.h" "$ROTA_AUT" \
+    || printf '%s:1: [ERRO passkey-fase0] sem handler de rota /webauthn/authenticate (ou /passkeys/authenticate) em código: asserção real entra na fase 0 (fatores.md 5.1)\n' "$TEM_IAM" >>"$ACHADOS"
+  { tem_rota "$LISTA.t" "$ROTA_REG" && tem_rota "$LISTA.t" "$ROTA_AUT"; } \
+    || printf '%s:1: [ERRO passkey-fase0] sem teste correspondente que exercite /webauthn/register E /webauthn/authenticate (arquivo de teste)\n' "$TEM_IAM" >>"$ACHADOS"
+  if tem_rota "$LISTA.h" "$ROTA_REG"; then
     xargs -d '\n' grep -qIiE "rp_?id|rpID|relying_?party|WEBAUTHN_(RP|ORIGIN)|expected_?origin|allowed_?origins" <"$LISTA" 2>/dev/null \
       || printf '%s:1: [AVISO passkey-fase0] passkey sem RP ID/origin fixados em config (por ambiente)\n' "$TEM_IAM" >>"$ACHADOS"
     xargs -d '\n' grep -qIiE "(reus|replay|reutiliz|repeat|stale|single[_ -]?use|consumed)[^\n]{0,60}challenge|challenge[^\n]{0,60}(reus|replay|reutiliz|repeat|stale|single[_ -]?use|consumed|expired)" <"$LISTA" 2>/dev/null \

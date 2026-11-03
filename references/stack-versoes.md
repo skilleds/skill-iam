@@ -26,8 +26,8 @@
 
 ## O que foi executado e o que não foi
 
-- **Executado:** `scripts/check-iam.test.sh` (24 casos) e `scripts/check-oidc.test.sh` (12 casos), `shellcheck` limpo.
-- **Não executado:** `assets/authz/model.fga` nunca passou pelo `fga model validate` (CLI ausente nesta máquina);
+- **Executado:** `scripts/check-iam.test.sh` (32 casos) e `scripts/check-oidc.test.sh` (12 casos), `shellcheck` limpo.
+- **Não executado:** `assets/authz/model.fga` nunca passou pelo `fga model validate` (CLI ausente nesta máquina; pendente `[~]`, rodar `fga model validate --file assets/authz/model.fga` numa máquina com o CLI e registrar aqui);
   nenhum IdP real foi exercitado pelo `check-oidc.sh` via URL (testado só com arquivos).
 - **Não verificado:** conteúdo atual de cada RFC listado acima; versões de bibliotecas de WebAuthn por linguagem
   (a skill não fixa biblioteca).

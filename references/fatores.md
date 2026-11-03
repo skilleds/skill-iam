@@ -76,14 +76,16 @@ de AAL alto para step-up.
 5. Notifica o usuário (canal verificado) e incentiva a segunda credencial (backup).
 
 **Ceremony de autenticação (asserção).**
-1. `POST /webauthn/auth/options`: challenge novo (mesmas regras). Sem `allowCredentials` quando discoverable (login sem
+1. `POST /webauthn/authenticate/options`: challenge novo (mesmas regras). Sem `allowCredentials` quando discoverable (login sem
    digitar usuário); com a lista quando o usuário já foi identificado.
 2. `navigator.credentials.get()`, em modal ou **conditional UI** (`mediation: "conditional"`).
-3. `POST /webauthn/auth/verify`: consome o challenge, confere `type == "webauthn.get"`, `origin`, `rpIdHash`, UP/UV,
+3. `POST /webauthn/authenticate/verify`: consome o challenge, confere `type == "webauthn.get"`, `origin`, `rpIdHash`, UP/UV,
    assinatura com a chave pública gravada, `userHandle` == ID interno do dono da credencial e `signCount`.
 4. `signCount` que não cresce (quando o autenticador usa contador, ou seja, > 0) é **sinalizado**: evento de risco,
    step-up ou bloqueio da credencial, nunca ignorado. Atualiza `signCount` e `last_used_at`.
 5. Emite a sessão com `amr` (`hwk`/`swk`, `user`) e `acr/aal` altos (ver `sessao.md`).
+
+**Gate.** `check-iam.sh` (regra `passkey-fase0`) só aceita handler de rota `/webauthn/register` e `/webauthn/authenticate` (ou `/passkeys/...`) em **código** (linha não-comentário) **e** um arquivo de teste que exercite as duas; palavra "passkey" em README, JSON ou comentário reprova.
 
 **Parâmetros recomendados** (ajuste só com ADR):
 
