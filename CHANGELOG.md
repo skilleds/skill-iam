@@ -2,7 +2,7 @@
 
 Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
-## [Não lançado]
+## [0.4.0] — 2026-11-03
 ### Corrigido
 - `check-iam.sh` `passkey-fase0`: deixa de aceitar a palavra "passkey" solta (README, JSON, comentário). Exige handler de rota `/webauthn|passkeys/register` e `/authenticate` em código (linha não-comentário) E arquivo de teste que exercite as duas; teste vermelho com JSON/comentário contendo "passkey" (P1-14). `check-iam.test.sh` agora com 32 casos.
 - `authz-rebac.md` §5: a promessa "o gate de CI falha se existir rota sem linha" agora aponta o gate real, `check-route-authz.sh` da `schematize-qa`, exigido por serviço; sem CI de PR (P1-13).
