@@ -1,7 +1,7 @@
 ---
 name: schematize-iam
 metadata:
-  version: 0.3.0
+  version: 0.4.0
 description: >-
   Broker de identidade: OIDC/OAuth 2.1 + PKCE, passkeys, 2FA, sessão, ReBAC multi-tenant, recuperação. Use ao projetar/revisar login, token, IdP ou authz. Gates. Teste: schematize-pentest.
 ---
@@ -16,7 +16,7 @@ longo vaza privilégio; quem exige fator forte antes do login cria o círculo in
 **dona** do desenho do broker; a `schematize-engineering` guarda o piso geral (`references/iam.md` e o checklist
 exaustivo por fase) e aponta para cá.
 
-**Versão:** skill `schematize-iam` v0.3.0. Changelog em `CHANGELOG.md`.
+**Versão:** skill `schematize-iam` v0.4.0. Changelog em `CHANGELOG.md`.
 
 ## Precedência e herança (leia antes de divergir)
 

@@ -1,0 +1,27 @@
+# Modelo ReBAC base multi-tenant (OpenFGA DSL 1.1) — ponto de partida, NÃO validado por execução.
+# Valide com: fga model validate --file model.fga   (OpenFGA CLI)
+model
+  schema 1.1
+
+type user
+
+type tenant
+  relations
+    define owner: [user]
+    define admin: [user] or owner
+    define member: [user] or admin
+    define viewer: [user] or member
+
+# papel customizado por tenant: conceder a permissão = ser assignee do papel
+type role
+  relations
+    define tenant: [tenant]
+    define assignee: [user]
+    define can_invoice_approve: assignee and member from tenant
+
+type invoice
+  relations
+    define parent: [tenant]
+    define approver_role: [role]
+    define can_view: viewer from parent
+    define can_approve: can_invoice_approve from approver_role or admin from parent

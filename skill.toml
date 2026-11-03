@@ -3,7 +3,7 @@ name = "schematize-iam"
 tag = "Disciplina · Identidade e acesso (IAM)"
 status = "beta"
 order = 43
-current_version = "0.3.0"
+current_version = "0.4.0"
 href = "/iam"
 
 [descriptions]
